@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#07162f" />
+  <meta name="description" content="ZAIN.NET Photo Grid AI Pro — pas foto, auto crop wajah, ganti background, mixed-size optimizer, DOCX siap cetak." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>ZAIN.NET — Photo Grid AI Pro</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+  <script src="optimizer.js" defer></script>
+  <script src="ai-local.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand-wrap">
+    <div class="logo">Z</div>
+    <div>
+      <h1>ZAIN.NET <span>Photo Grid AI Pro</span></h1>
+      <p>Pas foto • AI lokal • mixed-size optimizer • DOCX editable siap cetak</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button id="installPwa" class="mini-btn hidden">＋ Install Aplikasi</button>
+    <div class="badges"><span>AI Lokal</span><span>Tanpa API Token</span><span>GitHub Pages</span></div>
+  </div>
+</header>
+
+<main class="shell">
+  <section class="hero card">
+    <div>
+      <div class="eyebrow">ZAIN.NET PHOTO WORKSTATION</div>
+      <h2>Satu foto, banyak ukuran, susunan otomatis paling hemat kertas.</h2>
+      <p>Contoh: <b>3×4 = 5 lembar, 4×6 = 5 lembar, 2×3 = 3 lembar</b>. Semua dicampur dalam satu/lebih halaman, disusun otomatis agar area kosong sekecil mungkin, dan saat diekspor ke Word setiap foto tetap terpisah supaya mudah diedit manual.</p>
+      <div class="hero-note">AI bekerja lokal di browser. Pemuatan model pertama kali membutuhkan internet; foto tidak dikirim ke API.</div>
+    </div>
+    <div class="hero-stats">
+      <div><b id="statPhotos">0</b><span>Foto sumber</span></div>
+      <div><b id="statCopies">0</b><span>Total cetak</span></div>
+      <div><b id="statPages">0</b><span>Halaman</span></div>
+      <div><b id="statWaste">0%</b><span>Efisiensi area</span></div>
+    </div>
+  </section>
+
+  <section class="card upload-card">
+    <div class="section-title"><span class="num">1</span><div><h3>Upload Foto & Batch</h3><p>JPG, PNG, WEBP, PDF • PDF otomatis diubah menjadi JPG per halaman dan dicoba dikenali ukurannya</p></div></div>
+    <label class="dropzone" id="dropzone">
+      <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple hidden />
+      <div class="drop-icon">＋</div>
+      <strong>Tarik & lepas foto / PDF ke sini</strong>
+      <span>sekali klik untuk memilih JPG, PNG, WEBP, atau PDF dari perangkat</span>
+      <small>Saat PDF dipilih, Anda bisa memilih semua halaman atau halaman tertentu seperti 1,3,5-8. Hanya halaman terpilih yang dikonversi menjadi JPG.</small>
+    </label>
+    <div class="toolbar-row">
+      <button class="btn secondary" id="aiAll">✦ AI Wajah Semua</button>
+      <button class="btn secondary" id="enhanceAll">◐ Koreksi Otomatis Semua</button>
+      <button class="btn secondary" id="bgAll">▣ Hapus Background Semua</button>
+      <button class="btn ghost danger" id="clearAll">Hapus Semua</button>
+    </div>
+        <div id="aiStatus" class="status neutral">AI belum dijalankan.</div>
+    <div class="batch-tools">
+      <label class="batch-check"><input type="checkbox" id="selectAllPhotos"><span>Pilih semua foto</span></label>
+      <select id="batchSize">
+        <option value="3x4">3 × 4 cm</option>
+        <option value="4x6">4 × 6 cm</option>
+        <option value="2x3">2 × 3 cm</option>
+        <option value="35x45">3,5 × 4,5 cm</option>
+        <option value="5x5">5 × 5 cm</option>
+        <option value="ktp">KTP</option>
+        <option value="stnk">STNK</option>
+        <option value="2r">2R</option>
+        <option value="3r">3R</option>
+        <option value="4r">4R</option>
+        <option value="5r">5R</option>
+        <option value="6r">6R</option>
+        <option value="8r">8R</option>
+        <option value="8rs">8RS</option>
+        <option value="10r">10R</option>
+        <option value="10rs">10RS</option>
+      </select>
+      <button class="btn secondary" id="applyBatchSize">Terapkan ukuran ke foto terpilih</button>
+    </div>
+    <div id="photoList" class="photo-list empty-state">Belum ada foto.</div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><span class="num">2</span><div><h3>Template Otomatis</h3><p>Satu klik untuk menambahkan kebutuhan cetak ke semua foto. Sekarang tersedia juga pilihan <b>select all</b>, ganti ukuran sekaligus, dan mode isi foto yang lebih presisi.</p></div></div>
+    <div id="templateGrid" class="template-grid"></div>
+    <div class="hint"><b>Tip:</b> template “Paket Resmi Hemat” persis menyiapkan 3×4 ×5, 4×6 ×5, dan 2×3 ×3 per foto. Ukuran manual juga tetap tersedia di setiap kartu foto melalui tombol <b>Tambah ukuran manual</b> atau pilihan <b>Custom / Manual</b>.</div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><span class="num">3</span><div><h3>Mode Foto Pas Resmi & AI Lokal</h3><p>Deteksi wajah, auto crop presisi, rotasi wajah, background, dan koreksi foto. Jika ukuran asli 3×4 dipasang ke 4×6, Anda bisa pilih: tetap rasio asli dengan putih polos, Smart Crop presisi, atau Resize Presisi exact walau sedikit gepeng.</p></div></div>
+    <div class="option-grid ai-options">
+      <label class="choice"><input id="smartFace" type="checkbox" checked><span><b>AI Auto Crop Wajah</b><small>Posisi mata / hidung dipakai sebagai fokus crop agar hasil auto crop lebih presisi.</small></span></label>
+      <label class="choice"><input id="autoFaceRotate" type="checkbox" checked><span><b>Auto Rotate Wajah</b><small>Mencari orientasi 0/90/180/270° dan meratakan kemiringan mata.</small></span></label>
+      <label class="choice"><input id="autoEnhance" type="checkbox" checked><span><b>Koreksi Otomatis</b><small>Brightness, kontras, dan saturasi dihitung dari foto.</small></span></label>
+      <label class="choice"><input id="allowSlotRotate" type="checkbox" checked><span><b>Putar Slot untuk Hemat</b><small>Portrait: 3×4 diprioritaskan 6 foto/baris dan 4×6 diprioritaskan 5 foto/baris. Setelah satu baris penuh baru turun. Landscape tetap mengalir atas → bawah lalu ke kanan.</small></span></label>
+      <label class="choice"><input id="autoDetectSize" type="checkbox" checked><span><b>Deteksi Ukuran Otomatis</b><small>AI lokal menebak ukuran asli dari nama file, rasio gambar, atau ukuran halaman PDF. Untuk STNK/KTP diprioritaskan Fit Utuh agar tidak terpotong.</small></span></label>
+    </div>
+    <div class="grid-4 form-grid">
+      <label>Background Default<select id="defaultBg"><option value="original">Asli</option><option value="#ffffff">Putih</option><option value="#d71920">Merah</option><option value="#1976d2">Biru</option></select></label>
+      <label>Rasio Wajah Target<select id="faceRatio"><option value="0.38">Longgar 38%</option><option value="0.43" selected>Resmi 43%</option><option value="0.48">Dekat 48%</option><option value="0.52">Close-up 52%</option></select></label>
+      <label>Mode Foto<select id="fitMode"><option value="contain" selected>Fit Utuh (rasio asli, sisa putih polos)</option><option value="cover">Smart Crop Presisi</option><option value="stretch">Resize Presisi / Paksa Exact</option></select></label>
+      <label>Garis Potong<select id="cutGuides"><option value="1" selected>Aktif</option><option value="0">Mati</option></select></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><span class="num">4</span><div><h3>Kertas & Optimizer Hemat</h3><p>Algoritma mixed-size packing menyusun semua ukuran/copy di halaman yang sama. Untuk A4 portrait, 3×4 ditargetkan 6/baris dan 4×6 ditargetkan 5/baris tanpa mengecilkan ukuran.</p></div></div>
+    <div class="grid-4 form-grid">
+      <label>Kertas<select id="paperSize"><option value="A4">A4 — 21 × 29,7 cm</option><option value="F4">F4 — 21,5 × 33 cm</option><option value="LETTER">Letter — 21,59 × 27,94 cm</option><option value="LEGAL">Legal — 21,59 × 35,56 cm</option></select></label>
+      <label>Orientasi<select id="orientation"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label>
+      <label>Resolusi<select id="dpi"><option value="300">300 DPI</option><option value="450">450 DPI</option><option value="600">600 DPI</option></select></label>
+      <label>Jarak antar foto (cm)<input id="gap" type="number" min="0" max="2" step="0.05" value="0.18"></label>
+    </div>
+    <div class="grid-4 form-grid">
+      <label>Margin Atas<input id="mTop" type="number" step="0.1" min="0" value="0.7"></label>
+      <label>Margin Kanan<input id="mRight" type="number" step="0.1" min="0" value="0.7"></label>
+      <label>Margin Bawah<input id="mBottom" type="number" step="0.1" min="0" value="0.7"></label>
+      <label>Margin Kiri<input id="mLeft" type="number" step="0.1" min="0" value="0.7"></label>
+    </div>
+    <div id="layoutSummary" class="layout-summary">Tambahkan foto dan kebutuhan ukuran untuk menghitung layout.</div>
+  </section>
+
+  <section class="card preview-card">
+    <div class="section-title row-between">
+      <div class="title-inline"><span class="num">5</span><div><h3>Preview Lembar Cetak</h3><p>Ukuran campuran sesuai posisi optimizer.</p></div></div>
+      <div class="page-nav"><button id="prevPage">‹</button><span id="pageLabel">0 / 0</span><button id="nextPage">›</button></div>
+    </div>
+    <div class="preview-stage"><div id="paperPreview" class="paper-preview"><div class="preview-empty">Belum ada layout.</div></div></div>
+  </section>
+
+  <section class="card export-card">
+    <div>
+      <div class="section-title compact"><span class="num">6</span><div><h3>Ekspor Siap Cetak</h3><p>DOCX berisi setiap foto sebagai objek terpisah agar tetap rapi namun masih bisa diedit manual di Word.</p></div></div>
+      <div id="exportStatus" class="status neutral">Siap.</div>
+    </div>
+    <div class="export-actions">
+      <button class="btn secondary" id="savePreset">Simpan Preset</button>
+      <button class="btn secondary" id="loadPreset">Muat Preset</button>
+      <button class="btn secondary" id="exportPng">PNG Halaman</button>
+      <button class="btn primary" id="downloadDocx">Unduh DOCX</button>
+    </div>
+  </section>
+</main>
+
+<div id="pdfModal" class="modal hidden" aria-hidden="true">
+  <div class="modal-backdrop" data-pdf-close="1"></div>
+  <div class="modal-card pdf-modal-card">
+    <div class="modal-head">
+      <div><b>Pilih Halaman PDF</b><small id="pdfFileName">PDF</small></div>
+      <button id="pdfClose">×</button>
+    </div>
+    <div class="pdf-select-body">
+      <div class="pdf-info-box">
+        <b id="pdfPageCount">0 halaman</b>
+        <span>Pilih halaman yang akan dikonversi menjadi JPG dan dimasukkan ke Photo Grid.</span>
+      </div>
+      <label class="choice pdf-choice"><input type="radio" name="pdfPageMode" id="pdfAllPages" value="all" checked><span><b>Semua Halaman</b><small>Konversi seluruh halaman PDF menjadi JPG.</small></span></label>
+      <label class="choice pdf-choice"><input type="radio" name="pdfPageMode" id="pdfSelectedPages" value="selected"><span><b>Halaman Tertentu</b><small>Pilih halaman dengan format seperti 1,3,5-8.</small></span></label>
+      <label id="pdfRangeWrap" class="pdf-range-wrap disabled">Nomor halaman
+        <input id="pdfPageRange" type="text" placeholder="Contoh: 1,3,5-8" disabled />
+        <small id="pdfRangeHelp">Pisahkan dengan koma. Rentang memakai tanda minus.</small>
+      </label>
+      <div id="pdfSelectionStatus" class="status neutral">Semua halaman akan dipilih.</div>
+      <div class="modal-actions pdf-actions">
+        <button class="btn ghost" id="pdfCancel">Batal</button>
+        <button class="btn primary" id="pdfConvert">Konversi ke JPG</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="editorModal" class="modal hidden" aria-hidden="true">
+  <div class="modal-backdrop" data-close="1"></div>
+  <div class="modal-card">
+    <div class="modal-head"><div><b>Preview Wajah Sebelum Cetak</b><small id="editorPhotoName"></small></div><button id="closeEditor">×</button></div>
+    <div class="editor-body">
+      <div class="editor-preview-wrap"><canvas id="editorCanvas" width="450" height="600"></canvas><div class="face-guide"></div></div>
+      <div class="editor-controls">
+        <label>Ukuran Preview<select id="editorVariant"></select></label>
+        <label>Geser Horizontal<input id="focusX" type="range" min="0" max="100" value="50"></label>
+        <label>Geser Vertikal<input id="focusY" type="range" min="0" max="100" value="42"></label>
+        <label>Zoom<input id="zoom" type="range" min="70" max="180" value="100"></label>
+        <label>Brightness<input id="brightness" type="range" min="70" max="140" value="100"></label>
+        <label>Contrast<input id="contrast" type="range" min="70" max="140" value="100"></label>
+        <label>Saturation<input id="saturation" type="range" min="60" max="150" value="100"></label>
+        <label>Background<select id="editorBg"><option value="original">Asli</option><option value="#ffffff">Putih</option><option value="#d71920">Merah</option><option value="#1976d2">Biru</option></select></label>
+        <div class="modal-actions"><button class="btn secondary" id="editorAiFace">✦ Deteksi Wajah</button><button class="btn secondary" id="editorRemoveBg">▣ Hapus BG</button><button class="btn primary" id="applyEditor">Terapkan</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+</body>
+</html>

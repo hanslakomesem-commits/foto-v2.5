@@ -1,0 +1,14 @@
+{
+  "name":"ZAIN.NET Photo Grid AI Pro",
+  "short_name":"ZAIN Photo AI",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#edf3fa",
+  "theme_color":"#07162f",
+  "description":"AI lokal pas foto, mixed-size optimizer dan DOCX siap cetak.",
+  "icons":[
+    {"src":"icon-192.png","sizes":"192x192","type":"image/png"},
+    {"src":"icon-512.png","sizes":"512x512","type":"image/png"}
+  ]
+}

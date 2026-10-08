@@ -1,0 +1,38 @@
+CARA UPLOAD KE GITHUB PAGES
+
+1. Extract ZIP ini.
+2. Buat repository GitHub baru.
+3. Upload SEMUA file/folder di dalam hasil extract langsung ke ROOT repository.
+   Pastikan index.html terlihat langsung di halaman utama repository.
+4. Commit changes.
+5. Settings > Pages.
+6. Source: Deploy from a branch.
+7. Branch: main, Folder: / (root).
+8. Save dan tunggu deployment selesai.
+9. Buka link GitHub Pages lalu Ctrl+F5 jika masih cache versi lama.
+
+PWA:
+- Setelah situs dibuka melalui HTTPS GitHub Pages, tombol “Install Aplikasi” akan muncul jika browser mendukung.
+
+AI lokal:
+- Pemakaian pertama membutuhkan koneksi internet untuk memuat model MediaPipe.
+- Setelah model/browser cache tersedia, pemakaian berikutnya biasanya lebih cepat.
+
+
+UPDATE BARU:
+- Sekarang aplikasi bisa upload PDF.
+- PDF akan otomatis diubah menjadi JPG per halaman.
+
+
+VERSI FLAT / TANPA FOLDER:
+Upload SEMUA file hasil extract langsung ke halaman utama repository. Jangan upload folder pembungkus ZIP. Pastikan index.html terlihat langsung di root repository.
+
+
+FITUR PDF V2.2:
+- Upload PDF.
+- Pilih Semua Halaman atau Halaman Tertentu.
+- Format halaman tertentu: 1,3,5-8.
+- Hanya halaman terpilih yang otomatis dikonversi menjadi JPG.
+
+
+VERSI V2.3: alur optimizer mengikuti orientasi kertas + perbaikan upload sekali klik.
